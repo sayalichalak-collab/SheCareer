@@ -6,12 +6,59 @@ import requests
 import firebase_admin
 
 from bs4 import BeautifulSoup
+from urllib.parse import urljoin
 from firebase_admin import credentials, firestore
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
-UPSC_URL = "https://upsc.gov.in/advertisements/"
-APPLY_URL = "https://upsconline.nic.in/"
+SOURCES = [
+    {
+        "name": "UPSC",
+        "url": "https://upsc.gov.in/advertisements/",
+        "department": "Union Public Service Commission",
+        "category": "UPSC",
+        "location": "All India",
+        "official_url": "https://upsc.gov.in/",
+        "apply_url": "https://upsconline.nic.in/",
+        "keywords": ["advertisement", "recruitment", "vacancy"]
+    },
+    {
+        "name": "MPSC",
+        "url": "https://mpsc.gov.in/adv_notification/8",
+        "department": "Maharashtra Public Service Commission",
+        "category": "MPSC",
+        "location": "Maharashtra",
+        "official_url": "https://mpsc.gov.in/",
+        "apply_url": "https://mpsconline.gov.in/",
+        "keywords": ["advertisement", "recruitment", "जाहिरात", "भरती"]
+    },
+    {
+        "name": "SSC",
+        "url": "https://ssc.gov.in/home/notice-board",
+        "department": "Staff Selection Commission",
+        "category": "SSC",
+        "location": "All India",
+        "official_url": "https://ssc.gov.in/",
+        "apply_url": "https://ssc.gov.in/",
+        "keywords": [
+            "recruitment",
+            "examination",
+            "notice",
+            "combined graduate",
+            "combined higher secondary",
+            "constable",
+            "junior engineer",
+            "stenographer"
+        ]
+    }
+]
+
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (compatible; SheCareerJobUpdater/1.0)"
+}
 
 def connect_firebase():
     secret = os.environ.get("FIREBASE_SERVICE_ACCOUNT_JSON")
@@ -28,84 +75,115 @@ def connect_firebase():
     return firestore.client()
 
 
-def fetch_upsc_jobs(db):
-    headers = {
-        "User-Agent": "Mozilla/5.0 SheCareerJobUpdater/1.0"
-    }
+def make_job_id(url):
+    return hashlib.sha256(
+        url.encode("utf-8")
+    ).hexdigest()[:24]
 
-    response = requests.get(
-        UPSC_URL,
-        headers=headers,
-        timeout=30
-    )
 
-    response.raise_for_status()
+def fetch_source(db, source):
 
-    soup = BeautifulSoup(response.text, "html.parser")
+    logging.info("Checking %s: %s", source["name"], source["url"])
 
-    count = 0
+    try:
+        response = requests.get(
+            source["url"],
+            headers=HEADERS,
+            timeout=40
+        )
 
-    for row in soup.find_all("tr"):
-        text = " ".join(row.stripped_strings)
+        response.raise_for_status()
 
-        if "Advertisement" not in text:
-            continue
+        soup = BeautifulSoup(response.text, "html.parser")
 
-        notification_url = None
-        application_url = APPLY_URL
+        count = 0
 
-        for link in row.find_all("a", href=True):
-            href = link["href"].strip()
-            label = link.get_text(" ", strip=True).lower()
+        for link in soup.find_all("a", href=True):
 
-            if href.startswith("/"):
-                href = "https://upsc.gov.in" + href
+            label = link.get_text(" ", strip=True)
 
-            elif href.startswith("//"):
-                href = "https:" + href
+            parent_text = link.parent.get_text(
+                " ",
+                strip=True
+            ) if link.parent else ""
 
-            if ".pdf" in href.lower():
-                notification_url = href
+            title = " ".join(
+                f"{label} {parent_text}".split()
+            )
 
-            if "apply" in label:
-                application_url = href
+            href = urljoin(source["url"], link["href"].strip())
 
-        if not notification_url:
-            continue
+            if not href.lower().split("?")[0].endswith(".pdf"):
+                continue
 
-        job_id = hashlib.sha256(
-            notification_url.encode()
-        ).hexdigest()[:24]
+            searchable_text = title.lower()
 
-        db.collection("job_review_queue").document(job_id).set({
-            "title": text[:200],
-            "department": "Union Public Service Commission",
-            "category": "UPSC",
-            "location": "All India",
-            "officialUrl": UPSC_URL,
-            "notification": notification_url,
-            "applicationUrl": application_url,
-            "source": "Official UPSC Website",
-            "status": "pending_review",
-            "description": (
-                "Official UPSC advertisement detected. "
-                "Verify post names, vacancies, eligibility "
-                "and application deadline from the notification."
-            ),
-            "sourceVerified": True
-        }, merge=True)
+            if not any(
+                keyword.lower() in searchable_text
+                for keyword in source["keywords"]
+            ):
+                continue
 
-        count += 1
+            if len(title) < 5:
+                continue
 
-    logging.info("UPSC advertisements detected: %s", count)
+            job_id = make_job_id(href)
+
+            db.collection("job_review_queue").document(
+                job_id
+            ).set(
+                {
+                    "title": title[:300],
+                    "department": source["department"],
+                    "category": source["category"],
+                    "location": source["location"],
+                    "officialUrl": source["official_url"],
+                    "notification": href,
+                    "applicationUrl": source["apply_url"],
+                    "source": "Official " + source["name"] + " Website",
+                    "sourceName": source["name"],
+                    "status": "pending_review",
+                    "description": (
+                        "Official website PDF detected. "
+                        "Admin must verify the recruitment details, "
+                        "vacancies, eligibility and application dates "
+                        "from the official notification before publishing."
+                    ),
+                    "sourceVerified": True
+                },
+                merge=True
+            )
+
+            count += 1
+
+        logging.info(
+            "%s: %s matching PDF links detected",
+            source["name"],
+            count
+        )
+
+    except requests.RequestException as error:
+        logging.error(
+            "%s website request failed: %s",
+            source["name"],
+            error
+        )
+
+    except Exception:
+        logging.exception(
+            "%s processing failed",
+            source["name"]
+        )
 
 
 def main():
+
     db = connect_firebase()
 
-    fetch_upsc_jobs(db)
+    for source in SOURCES:
+        fetch_source(db, source)
 
-    logging.info("UPSC automatic checking completed.")
+    logging.info("SheCareer automatic checking completed.")
 
 
 if __name__ == "__main__":
