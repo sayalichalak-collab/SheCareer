@@ -18,17 +18,20 @@
 body {
     background: #fffaff;
     color: var(--text);
+    font-size: 19px;
+    line-height: 1.7;
 }
 
 /* HEADER */
 
 .header {
     width: 100%;
-    padding: 18px 7%;
+    padding: 18px 5%;
     background: white;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 20px;
     box-shadow: 0 3px 15px rgba(0,0,0,0.07);
     position: sticky;
     top: 0;
@@ -36,7 +39,7 @@ body {
 }
 
 .logo {
-    font-size: 30px;
+    font-size: 34px;
     font-weight: 800;
     color: var(--purple);
 }
@@ -54,6 +57,7 @@ nav {
 nav a {
     text-decoration: none;
     color: #444;
+    font-size: 18px;
     font-weight: 600;
     transition: 0.3s;
 }
@@ -66,9 +70,10 @@ nav a:hover {
     background: var(--purple);
     color: white;
     border: none;
-    padding: 10px 18px;
+    padding: 13px 22px;
     border-radius: 25px;
     cursor: pointer;
+    font-size: 17px;
     font-weight: 600;
 }
 
@@ -78,31 +83,31 @@ nav a:hover {
     min-height: 470px;
     display: flex;
     align-items: center;
-    padding: 70px 9%;
+    padding: 70px 8%;
     background: linear-gradient(120deg, #501080, #9b38bd, #ed4b9b);
     color: white;
 }
 
 .hero-content {
-    max-width: 650px;
+    max-width: 850px;
 }
 
 .tag {
     background: rgba(255,255,255,0.18);
-    padding: 9px 18px;
+    padding: 10px 20px;
     border-radius: 30px;
-    font-size: 12px;
-    letter-spacing: 2px;
+    font-size: 16px;
+    letter-spacing: 1px;
 }
 
 .hero h1 {
-    font-size: 48px;
-    margin: 25px 0 15px;
-    line-height: 1.2;
+    font-size: clamp(42px, 5vw, 58px);
+    margin: 25px 0 18px;
+    line-height: 1.25;
 }
 
 .hero p {
-    font-size: 18px;
+    font-size: 22px;
     margin-bottom: 30px;
 }
 
@@ -111,8 +116,9 @@ nav a:hover {
     background: white;
     color: var(--purple);
     text-decoration: none;
-    padding: 14px 27px;
+    padding: 16px 32px;
     border-radius: 30px;
+    font-size: 18px;
     font-weight: bold;
     transition: 0.3s;
 }
@@ -126,61 +132,67 @@ nav a:hover {
 /* COMMON SECTION */
 
 .section {
-    padding: 75px 8%;
+    width: 100%;
+    padding: 75px 5%;
 }
 
 .section-heading {
     text-align: center;
-    margin-bottom: 40px;
+    margin-bottom: 45px;
 }
 
 .section-heading span {
     color: var(--pink);
-    font-size: 13px;
+    font-size: 16px;
     font-weight: 800;
     letter-spacing: 2px;
 }
 
 .section-heading h2 {
     color: var(--dark-purple);
-    font-size: 34px;
+    font-size: 42px;
     margin: 12px 0;
 }
 
 .section-heading p {
-    color: #777;
+    color: #666;
+    font-size: 19px;
 }
 
 /* CATEGORIES */
 
 .category-grid {
+    width: 100%;
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 20px;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 24px;
 }
 
 .category-card {
     background: white;
     border: 1px solid #f1d9ed;
-    padding: 25px 10px;
-    border-radius: 16px;
+    min-height: 155px;
+    padding: 28px 15px;
+    border-radius: 18px;
     cursor: pointer;
     transition: 0.3s;
     color: var(--dark-purple);
+    text-align: center;
 }
 
 .category-card span {
-    font-size: 35px;
+    font-size: 46px;
 }
 
 .category-card h3 {
     margin-top: 12px;
+    font-size: 21px;
 }
 
 .category-card:hover {
     background: var(--purple);
     color: white;
-    transform: translateY(-7px);
+    transform: translateY(-6px);
     box-shadow: 0 10px 25px rgba(112,40,168,0.2);
 }
 
@@ -192,18 +204,20 @@ nav a:hover {
 
 .search-box {
     display: flex;
-    max-width: 650px;
-    margin: 0 auto 25px;
-    gap: 10px;
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto 30px;
+    gap: 12px;
 }
 
 .search-box input {
     flex: 1;
-    padding: 15px;
+    min-width: 0;
+    padding: 18px;
     border: 1px solid #e4c9e3;
-    border-radius: 10px;
+    border-radius: 12px;
     outline: none;
-    font-size: 15px;
+    font-size: 19px;
 }
 
 .search-box input:focus {
@@ -215,9 +229,10 @@ nav a:hover {
     background: var(--purple);
     color: white;
     border: none;
-    padding: 13px 22px;
-    border-radius: 10px;
+    padding: 16px 25px;
+    border-radius: 12px;
     cursor: pointer;
+    font-size: 17px;
     font-weight: 600;
 }
 
@@ -225,15 +240,16 @@ nav a:hover {
     display: flex;
     justify-content: center;
     gap: 15px;
-    margin-bottom: 35px;
+    margin-bottom: 40px;
 }
 
 .filters select {
-    padding: 12px 20px;
+    padding: 15px 20px;
     border: 1px solid #e4c9e3;
-    border-radius: 9px;
+    border-radius: 10px;
     background: white;
     cursor: pointer;
+    font-size: 17px;
 }
 
 #resetBtn {
@@ -241,17 +257,18 @@ nav a:hover {
 }
 
 .job-grid {
+    width: 100%;
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 25px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 28px;
 }
 
 .job-card {
     background: white;
-    padding: 25px;
-    border-radius: 15px;
+    padding: 30px;
+    border-radius: 18px;
     box-shadow: 0 5px 18px rgba(0,0,0,0.06);
-    border-bottom: 4px solid var(--pink);
+    border-bottom: 5px solid var(--pink);
     transition: 0.3s;
 }
 
@@ -262,24 +279,25 @@ nav a:hover {
 
 .job-card h3 {
     color: var(--dark-purple);
-    font-size: 21px;
-    margin-bottom: 15px;
+    font-size: 26px;
+    margin-bottom: 16px;
 }
 
 .job-card p {
-    color: #666;
-    margin: 8px 0;
-    font-size: 14px;
+    color: #555;
+    margin: 10px 0;
+    font-size: 19px;
 }
 
 .job-card button {
     background: linear-gradient(90deg, var(--purple), var(--pink));
     color: white;
     border: none;
-    padding: 11px 20px;
-    border-radius: 8px;
+    padding: 15px 23px;
+    border-radius: 10px;
     margin-top: 18px;
     cursor: pointer;
+    font-size: 17px;
     font-weight: 600;
 }
 
@@ -291,7 +309,8 @@ nav a:hover {
     text-align: center;
     color: var(--purple);
     font-weight: bold;
-    padding: 30px;
+    padding: 35px;
+    font-size: 20px;
 }
 
 /* ABOUT */
@@ -303,11 +322,11 @@ nav a:hover {
 
 .about-section > p,
 .contact-section > p {
-    max-width: 750px;
+    max-width: 950px;
     margin: auto;
     line-height: 1.9;
-    color: #666;
-    font-size: 16px;
+    color: #555;
+    font-size: 20px;
 }
 
 /* CONTACT */
@@ -318,7 +337,7 @@ nav a:hover {
 }
 
 .contact-section > p + p {
-    margin-top: 15px;
+    margin-top: 18px;
     color: var(--purple);
     font-weight: bold;
 }
@@ -329,17 +348,18 @@ footer {
     text-align: center;
     background: var(--dark-purple);
     color: white;
-    padding: 35px 15px;
+    padding: 45px 20px;
 }
 
 footer h2 {
-    font-size: 30px;
-    margin-bottom: 12px;
+    font-size: 34px;
+    margin-bottom: 15px;
 }
 
 footer p {
-    margin: 8px 0;
+    margin: 10px 0;
     color: #eee;
+    font-size: 18px;
 }
 
 /* MODAL */
@@ -358,9 +378,11 @@ footer p {
 .modal-content {
     background: white;
     width: 100%;
-    max-width: 480px;
-    padding: 35px;
-    border-radius: 18px;
+    max-width: 600px;
+    max-height: 85vh;
+    overflow-y: auto;
+    padding: 38px;
+    border-radius: 20px;
     position: relative;
     animation: popup 0.3s ease;
 }
@@ -378,20 +400,22 @@ footer p {
 
 .modal-content h2 {
     color: var(--purple);
-    margin-bottom: 20px;
+    margin-bottom: 22px;
+    font-size: 30px;
 }
 
 .modal-content p {
     line-height: 1.8;
     color: #555;
-    margin-bottom: 12px;
+    margin-bottom: 15px;
+    font-size: 19px;
 }
 
 .close-btn {
     position: absolute;
     top: 10px;
-    right: 18px;
-    font-size: 30px;
+    right: 20px;
+    font-size: 34px;
     border: none;
     background: none;
     cursor: pointer;
@@ -402,18 +426,20 @@ footer p {
     background: var(--purple);
     color: white;
     border: none;
-    padding: 12px 25px;
-    border-radius: 8px;
+    padding: 15px 28px;
+    border-radius: 10px;
     cursor: pointer;
-    margin-top: 15px;
+    margin-top: 18px;
+    font-size: 17px;
 }
 
-/* RESPONSIVE */
+/* TABLET */
 
-@media(max-width: 900px) {
+@media(max-width: 1000px) {
 
     .header {
         flex-wrap: wrap;
+        justify-content: center;
         gap: 15px;
     }
 
@@ -422,53 +448,127 @@ footer p {
         width: 100%;
         justify-content: center;
         flex-wrap: wrap;
-        gap: 15px;
+        gap: 18px;
     }
 
     .category-grid {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
     .job-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
-
 }
+
+/* MOBILE */
 
 @media(max-width: 600px) {
 
-    .hero {
-        min-height: 400px;
-        padding: 55px 7%;
+    body {
+        font-size: 17px;
     }
 
-    .hero h1 {
-        font-size: 34px;
+    .header {
+        padding: 14px 4%;
     }
 
-    .hero p {
+    .logo {
+        font-size: 28px;
+    }
+
+    nav {
+        gap: 12px;
+    }
+
+    nav a {
         font-size: 15px;
     }
 
+    .language-btn {
+        padding: 10px 15px;
+        font-size: 15px;
+    }
+
+    .hero {
+        min-height: 370px;
+        padding: 45px 6%;
+    }
+
+    .hero h1 {
+        font-size: 38px;
+    }
+
+    .hero p {
+        font-size: 19px;
+    }
+
+    .hero-btn {
+        padding: 14px 25px;
+        font-size: 17px;
+    }
+
     .section {
-        padding: 55px 6%;
+        padding: 50px 5%;
+    }
+
+    .section-heading {
+        margin-bottom: 30px;
     }
 
     .section-heading h2 {
-        font-size: 27px;
+        font-size: 32px;
+    }
+
+    .section-heading p {
+        font-size: 17px;
     }
 
     .category-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 12px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+    }
+
+    .category-card {
+        min-height: 130px;
+        padding: 20px 8px;
+    }
+
+    .category-card span {
+        font-size: 36px;
+    }
+
+    .category-card h3 {
+        font-size: 17px;
     }
 
     .job-grid {
         grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .job-card {
+        padding: 23px;
+    }
+
+    .job-card h3 {
+        font-size: 23px;
+    }
+
+    .job-card p {
+        font-size: 17px;
     }
 
     .search-box {
         flex-direction: column;
+    }
+
+    .search-box input {
+        font-size: 17px;
+        padding: 15px;
+    }
+
+    .search-box button {
+        width: 100%;
     }
 
     .filters {
@@ -480,8 +580,28 @@ footer p {
         width: 100%;
     }
 
-    nav {
-        font-size: 13px;
+    .about-section > p,
+    .contact-section > p {
+        font-size: 17px;
     }
 
+    footer h2 {
+        font-size: 29px;
+    }
+
+    footer p {
+        font-size: 16px;
+    }
+
+    .modal-content {
+        padding: 28px 22px;
+    }
+
+    .modal-content h2 {
+        font-size: 25px;
+    }
+
+    .modal-content p {
+        font-size: 17px;
+    }
 }
