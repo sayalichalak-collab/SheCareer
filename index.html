@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -45,6 +46,111 @@
 
 .modal-actions {
     margin: 20px 0;
+}
+
+/* CATEGORY DIRECTORY POPUP */
+
+.directory-modal {
+    display: none;
+    position: fixed;
+    z-index: 10000;
+    inset: 0;
+    background: rgba(20, 10, 30, 0.75);
+    align-items: center;
+    justify-content: center;
+    padding: 15px;
+}
+
+.directory-content {
+    background: white;
+    width: 100%;
+    max-width: 550px;
+    max-height: 85vh;
+    overflow-y: auto;
+    border-radius: 18px;
+    padding: 28px;
+    position: relative;
+    box-shadow: 0 15px 50px rgba(0,0,0,0.25);
+}
+
+.directory-content h2 {
+    color: #7028a0;
+    margin-bottom: 8px;
+    padding-right: 25px;
+}
+
+.directory-description {
+    color: #666;
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+
+.directory-item {
+    border: 1px solid #eee;
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 12px;
+    background: #fffaff;
+}
+
+.directory-item h3 {
+    color: #7028a0;
+    font-size: 17px;
+    margin-bottom: 6px;
+}
+
+.directory-item p {
+    color: #666;
+    font-size: 13px;
+    margin-bottom: 10px;
+}
+
+.directory-link {
+    display: inline-block;
+    background: #7028a0;
+    color: white;
+    padding: 9px 15px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.directory-note {
+    background: #fff4e5;
+    color: #76501c;
+    padding: 12px;
+    border-radius: 9px;
+    font-size: 13px;
+    line-height: 1.5;
+    margin-top: 15px;
+}
+
+.directory-jobs-btn {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 9px;
+    background: #7028a0;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 15px;
+}
+
+.directory-close {
+    position: absolute;
+    right: 17px;
+    top: 12px;
+    border: none;
+    background: none;
+    font-size: 30px;
+    color: #7028a0;
+    cursor: pointer;
+}
+
+.category-card {
+    cursor: pointer;
 }
 </style>
 </head>
@@ -145,6 +251,9 @@
     <p>© 2026 SheCareer. All Rights Reserved.</p>
 </footer>
 
+
+<!-- JOB DETAILS POPUP -->
+
 <div id="jobModal" class="modal">
     <div class="modal-content">
 
@@ -160,6 +269,32 @@
 
     </div>
 </div>
+
+
+<!-- CATEGORY OFFICIAL WEBSITE POPUP -->
+
+<div id="directoryModal" class="directory-modal">
+
+    <div class="directory-content">
+
+        <button id="directoryClose" class="directory-close">&times;</button>
+
+        <h2 id="directoryTitle"></h2>
+
+        <p id="directoryDescription" class="directory-description"></p>
+
+        <div id="directoryLinks"></div>
+
+        <div id="directoryNote" class="directory-note"></div>
+
+        <button id="directoryJobsBtn" class="directory-jobs-btn">
+            View Available Jobs
+        </button>
+
+    </div>
+
+</div>
+
 
 <script type="module">
 
@@ -190,7 +325,6 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-
 const jobsCollection = collection(db, "jobs");
 
 
@@ -199,11 +333,245 @@ const jobsCollection = collection(db, "jobs");
 let jobs = [];
 let selectedCategory = "All";
 let currentLanguage = "en";
+let selectedDirectoryCategory = "";
 
 const jobContainer = document.getElementById("jobContainer");
 const searchInput = document.getElementById("searchInput");
 const locationFilter = document.getElementById("locationFilter");
 const modal = document.getElementById("jobModal");
+const directoryModal = document.getElementById("directoryModal");
+
+
+/* OFFICIAL GOVERNMENT WEBSITE DIRECTORY */
+
+const directory = {
+
+    Banking: {
+        icon: "🏦",
+        en: "Banking Recruitment Websites",
+        mr: "बँकिंग भरतीच्या अधिकृत वेबसाइट्स",
+        description: {
+            en: "Check official recruitment and career updates from banking institutions.",
+            mr: "बँकिंग संस्थांच्या अधिकृत भरती आणि करिअर अपडेट्स येथे तपासा."
+        },
+        links: [
+            {
+                name: "IBPS",
+                url: "https://www.ibps.in/",
+                info: "Institute of Banking Personnel Selection"
+            },
+            {
+                name: "SBI Careers",
+                url: "https://sbi.co.in/web/careers",
+                info: "State Bank of India Recruitment"
+            },
+            {
+                name: "RBI Opportunities",
+                url: "https://opportunities.rbi.org.in/",
+                info: "Reserve Bank of India"
+            }
+        ]
+    },
+
+    Police: {
+        icon: "👮‍♀️",
+        en: "Police Recruitment Websites",
+        mr: "पोलीस भरतीच्या अधिकृत वेबसाइट्स",
+        description: {
+            en: "Check official police recruitment announcements and updates.",
+            mr: "पोलीस भरतीच्या अधिकृत जाहिराती आणि अपडेट्स तपासा."
+        },
+        links: [
+            {
+                name: "Maharashtra Police",
+                url: "https://www.mahapolice.gov.in/",
+                info: "Maharashtra Police official website"
+            },
+            {
+                name: "Maharashtra Government",
+                url: "https://www.maharashtra.gov.in/",
+                info: "Government of Maharashtra"
+            }
+        ]
+    },
+
+    Railway: {
+        icon: "🚆",
+        en: "Railway Recruitment Websites",
+        mr: "रेल्वे भरतीच्या अधिकृत वेबसाइट्स",
+        description: {
+            en: "Check Railway Recruitment Board notifications and application updates.",
+            mr: "रेल्वे भरती मंडळाच्या जाहिराती आणि अर्ज अपडेट्स तपासा."
+        },
+        links: [
+            {
+                name: "RRB Apply",
+                url: "https://www.rrbapply.gov.in/",
+                info: "Railway Recruitment application portal"
+            },
+            {
+                name: "Indian Railways",
+                url: "https://indianrailways.gov.in/",
+                info: "Indian Railways official website"
+            }
+        ]
+    },
+
+    Teaching: {
+        icon: "📚",
+        en: "Teaching Recruitment Websites",
+        mr: "शिक्षक भरतीच्या अधिकृत वेबसाइट्स",
+        description: {
+            en: "Check teaching recruitment, school and education examination updates.",
+            mr: "शिक्षक भरती, शाळा आणि शिक्षण परीक्षांचे अपडेट्स तपासा."
+        },
+        links: [
+            {
+                name: "Kendriya Vidyalaya Sangathan",
+                url: "https://kvsangathan.nic.in/",
+                info: "KVS official website"
+            },
+            {
+                name: "Navodaya Vidyalaya Samiti",
+                url: "https://navodaya.gov.in/",
+                info: "NVS official website"
+            },
+            {
+                name: "CTET",
+                url: "https://ctet.nic.in/",
+                info: "Central Teacher Eligibility Test"
+            }
+        ]
+    },
+
+    Medical: {
+        icon: "🏥",
+        en: "Medical Recruitment Websites",
+        mr: "वैद्यकीय भरतीच्या अधिकृत वेबसाइट्स",
+        description: {
+            en: "Check official medical, hospital and healthcare recruitment updates.",
+            mr: "वैद्यकीय, रुग्णालय आणि आरोग्य विभागाच्या भरती तपासा."
+        },
+        links: [
+            {
+                name: "AIIMS Exams",
+                url: "https://aiimsexams.ac.in/",
+                info: "AIIMS examination and recruitment portal"
+            },
+            {
+                name: "National Health Mission Maharashtra",
+                url: "https://nhm.maharashtra.gov.in/",
+                info: "Maharashtra National Health Mission"
+            }
+        ]
+    },
+
+    UPSC: {
+        icon: "🎓",
+        en: "UPSC Recruitment",
+        mr: "UPSC भरती",
+        description: {
+            en: "Check Union Public Service Commission examinations and recruitment advertisements.",
+            mr: "केंद्रीय लोकसेवा आयोगाच्या परीक्षा आणि भरती जाहिराती तपासा."
+        },
+        links: [
+            {
+                name: "UPSC Official Website",
+                url: "https://upsc.gov.in/",
+                info: "Union Public Service Commission"
+            },
+            {
+                name: "UPSC Online Application",
+                url: "https://upsconline.nic.in/",
+                info: "Official UPSC application portal"
+            }
+        ]
+    },
+
+    MPSC: {
+        icon: "📋",
+        en: "MPSC Recruitment",
+        mr: "MPSC भरती",
+        description: {
+            en: "Check Maharashtra Public Service Commission recruitment and examination updates.",
+            mr: "महाराष्ट्र लोकसेवा आयोगाच्या भरती आणि परीक्षा अपडेट्स तपासा."
+        },
+        links: [
+            {
+                name: "MPSC Official Website",
+                url: "https://mpsc.gov.in/",
+                info: "Maharashtra Public Service Commission"
+            }
+        ]
+    },
+
+    Defence: {
+        icon: "🛡️",
+        en: "Defence Recruitment Websites",
+        mr: "संरक्षण दल भरतीच्या अधिकृत वेबसाइट्स",
+        description: {
+            en: "Explore official Army, Navy and Air Force recruitment portals.",
+            mr: "लष्कर, नौदल आणि हवाई दलाच्या अधिकृत भरती वेबसाइट्स पाहा."
+        },
+        links: [
+            {
+                name: "Join Indian Army",
+                url: "https://joinindianarmy.nic.in/",
+                info: "Indian Army recruitment"
+            },
+            {
+                name: "Join Indian Navy",
+                url: "https://joinindiannavy.gov.in/",
+                info: "Indian Navy recruitment"
+            },
+            {
+                name: "Indian Air Force - AFCAT",
+                url: "https://afcat.cdac.in/",
+                info: "Air Force Common Admission Test"
+            }
+        ]
+    },
+
+    SSC: {
+        icon: "💼",
+        en: "SSC Recruitment",
+        mr: "SSC भरती",
+        description: {
+            en: "Check Staff Selection Commission examinations and recruitment notifications.",
+            mr: "कर्मचारी निवड आयोगाच्या परीक्षा आणि भरती जाहिराती तपासा."
+        },
+        links: [
+            {
+                name: "SSC Official Website",
+                url: "https://ssc.gov.in/",
+                info: "Staff Selection Commission"
+            }
+        ]
+    },
+
+    Other: {
+        icon: "✨",
+        en: "Other Government Career Websites",
+        mr: "इतर सरकारी करिअर वेबसाइट्स",
+        description: {
+            en: "Explore additional official employment and career information portals.",
+            mr: "इतर अधिकृत रोजगार आणि करिअर माहिती वेबसाइट्स पाहा."
+        },
+        links: [
+            {
+                name: "National Career Service",
+                url: "https://www.ncs.gov.in/",
+                info: "Government of India employment portal"
+            },
+            {
+                name: "Employment News",
+                url: "https://employmentnews.gov.in/",
+                info: "Government employment news"
+            }
+        ]
+    }
+
+};
 
 
 /* TRANSLATIONS */
@@ -224,7 +592,10 @@ const translations = {
         category: "Category",
         description: "Job Description",
         unavailable: "Link Not Available",
-        notice: "Please verify eligibility, salary and application dates in the official notification."
+        notice: "Please verify eligibility, salary and application dates in the official notification.",
+        directoryNote: "Vacancies change frequently. Check the official website for current recruitment notifications. SheCareer does not claim that every listed department currently has an active vacancy.",
+        viewJobs: "View Available Jobs",
+        noCategoryJobs: "No published jobs are currently available in this category."
     },
 
     mr: {
@@ -241,7 +612,10 @@ const translations = {
         category: "विभाग",
         description: "नोकरीचे वर्णन",
         unavailable: "लिंक उपलब्ध नाही",
-        notice: "पात्रता, पगार आणि अर्जाच्या तारखा अधिकृत जाहिरातीत तपासा."
+        notice: "पात्रता, पगार आणि अर्जाच्या तारखा अधिकृत जाहिरातीत तपासा.",
+        directoryNote: "भरतीच्या जागा वेळोवेळी बदलतात. सध्याच्या भरतीच्या जाहिरातींसाठी अधिकृत वेबसाइट तपासा. या विभागात सध्या भरती सुरू असल्याचा SheCareer दावा करत नाही.",
+        viewJobs: "उपलब्ध नोकऱ्या पहा",
+        noCategoryJobs: "या विभागात सध्या प्रकाशित नोकऱ्या उपलब्ध नाहीत."
     }
 
 };
@@ -252,16 +626,13 @@ const translations = {
 function isValidHttpUrl(value) {
 
     try {
-
         const url = new URL(value);
 
         return url.protocol === "https:" ||
                url.protocol === "http:";
 
     } catch {
-
         return false;
-
     }
 
 }
@@ -286,9 +657,7 @@ function createLinkButton(text, url, className) {
 
         button.href = "#";
         button.classList.add("disabled-btn");
-
         button.setAttribute("aria-disabled", "true");
-
         button.title = translations[currentLanguage].unavailable;
 
     }
@@ -320,7 +689,6 @@ function formatLocation(location) {
 function displayJobs() {
 
     const search = searchInput.value.trim().toLowerCase();
-
     const location = locationFilter.value;
 
     jobContainer.innerHTML = "";
@@ -328,7 +696,6 @@ function displayJobs() {
     const filtered = jobs.filter(job => {
 
         const jobName = (job.name || "").toLowerCase();
-
         const categoryName = (job.category || "").toLowerCase();
 
         const matchSearch =
@@ -354,43 +721,30 @@ function displayJobs() {
     filtered.forEach(job => {
 
         const card = document.createElement("div");
-
         card.className = "job-card";
 
-
         const title = document.createElement("h3");
-
         title.textContent = job.name;
 
-
         const category = document.createElement("p");
-
         category.textContent =
             translations[currentLanguage].category +
             ": " + (job.category || "Other");
 
-
         const place = document.createElement("p");
-
         place.textContent =
             translations[currentLanguage].location +
             ": " + formatLocation(job.location);
 
-
         const buttons = document.createElement("div");
-
         buttons.className = "action-buttons";
 
-
         const detailsButton = document.createElement("button");
-
         detailsButton.type = "button";
-
         detailsButton.textContent =
             translations[currentLanguage].details;
 
         detailsButton.addEventListener("click", () => showDetails(job));
-
 
         const applyButton = createLinkButton(
             translations[currentLanguage].apply,
@@ -398,9 +752,7 @@ function displayJobs() {
             "apply-btn"
         );
 
-
         buttons.append(detailsButton, applyButton);
-
         card.append(title, category, place, buttons);
 
         jobContainer.appendChild(card);
@@ -411,9 +763,7 @@ function displayJobs() {
     const noResults = document.getElementById("noResults");
 
     noResults.hidden = filtered.length > 0;
-
-    noResults.textContent =
-        translations[currentLanguage].noResults;
+    noResults.textContent = translations[currentLanguage].noResults;
 
 }
 
@@ -425,44 +775,30 @@ function showDetails(job) {
     document.getElementById("modalTitle").textContent = job.name;
 
     const body = document.getElementById("modalBody");
-
     body.innerHTML = "";
 
-
     const category = document.createElement("p");
-
     category.textContent =
         translations[currentLanguage].category +
         ": " + (job.category || "Other");
 
-
     const location = document.createElement("p");
-
     location.textContent =
         translations[currentLanguage].location +
         ": " + formatLocation(job.location);
 
-
     const description = document.createElement("p");
-
     description.textContent =
         translations[currentLanguage].description +
         ": " + (job.description || "Please check the official notification.");
 
-
     const notice = document.createElement("p");
-
-    notice.textContent =
-        translations[currentLanguage].notice;
-
+    notice.textContent = translations[currentLanguage].notice;
 
     body.append(category, location, description, notice);
 
-
     const actions = document.getElementById("modalActions");
-
     actions.innerHTML = "";
-
 
     const applyButton = createLinkButton(
         translations[currentLanguage].apply,
@@ -470,13 +806,11 @@ function showDetails(job) {
         "apply-btn"
     );
 
-
     const officialButton = createLinkButton(
         translations[currentLanguage].official,
         job.officialUrl,
         "official-btn"
     );
-
 
     const notificationButton = createLinkButton(
         translations[currentLanguage].notification,
@@ -484,26 +818,122 @@ function showDetails(job) {
         "official-btn"
     );
 
-
-    actions.append(
-        applyButton,
-        officialButton,
-        notificationButton
-    );
-
+    actions.append(applyButton, officialButton, notificationButton);
 
     modal.style.display = "flex";
 
 }
 
 
-/* CLOSE MODAL */
+/* CLOSE JOB MODAL */
 
 function closeModal() {
-
     modal.style.display = "none";
+}
+
+
+/* CATEGORY DIRECTORY POPUP */
+
+function showDirectory(categoryName) {
+
+    const item = directory[categoryName];
+
+    if (!item) return;
+
+    selectedDirectoryCategory = categoryName;
+
+    const title = document.getElementById("directoryTitle");
+
+    title.textContent =
+        item.icon + " " +
+        (currentLanguage === "en" ? item.en : item.mr);
+
+    document.getElementById("directoryDescription").textContent =
+        item.description[currentLanguage];
+
+    const linksContainer = document.getElementById("directoryLinks");
+
+    linksContainer.innerHTML = "";
+
+    item.links.forEach(link => {
+
+        const box = document.createElement("div");
+        box.className = "directory-item";
+
+        const heading = document.createElement("h3");
+        heading.textContent = link.name;
+
+        const info = document.createElement("p");
+        info.textContent = link.info;
+
+        const anchor = document.createElement("a");
+        anchor.className = "directory-link";
+        anchor.textContent =
+            currentLanguage === "en"
+                ? "Visit Official Website ↗"
+                : "अधिकृत वेबसाइट पहा ↗";
+
+        anchor.href = link.url;
+        anchor.target = "_blank";
+        anchor.rel = "noopener noreferrer";
+
+        box.append(heading, info, anchor);
+
+        linksContainer.appendChild(box);
+
+    });
+
+
+    document.getElementById("directoryNote").textContent =
+        translations[currentLanguage].directoryNote;
+
+    document.getElementById("directoryJobsBtn").textContent =
+        translations[currentLanguage].viewJobs;
+
+    directoryModal.style.display = "flex";
 
 }
+
+
+/* CLOSE DIRECTORY */
+
+function closeDirectory() {
+    directoryModal.style.display = "none";
+}
+
+
+/* CATEGORY CARD EVENTS */
+
+document.querySelectorAll(".category-card")
+.forEach(button => {
+
+    button.addEventListener("click", () => {
+
+        showDirectory(button.dataset.category);
+
+    });
+
+});
+
+
+/* VIEW AVAILABLE JOBS FROM DIRECTORY */
+
+document.getElementById("directoryJobsBtn")
+.addEventListener("click", () => {
+
+    selectedCategory = selectedDirectoryCategory;
+
+    searchInput.value = "";
+    locationFilter.value = "";
+
+    closeDirectory();
+
+    displayJobs();
+
+    document.getElementById("jobs")
+        .scrollIntoView({ behavior: "smooth" });
+
+});
 
 
 /* SEARCH */
@@ -525,31 +955,10 @@ document.getElementById("resetBtn")
 .addEventListener("click", () => {
 
     selectedCategory = "All";
-
     searchInput.value = "";
-
     locationFilter.value = "";
 
     displayJobs();
-
-});
-
-
-/* CATEGORY FILTER */
-
-document.querySelectorAll(".category-card")
-.forEach(button => {
-
-    button.addEventListener("click", () => {
-
-        selectedCategory = button.dataset.category;
-
-        displayJobs();
-
-        document.getElementById("jobs")
-        .scrollIntoView({ behavior: "smooth" });
-
-    });
 
 });
 
@@ -565,19 +974,31 @@ document.getElementById("modalCloseBtn")
 modal.addEventListener("click", event => {
 
     if (event.target === modal) {
-
         closeModal();
-
     }
 
 });
 
+
+document.getElementById("directoryClose")
+.addEventListener("click", closeDirectory);
+
+directoryModal.addEventListener("click", event => {
+
+    if (event.target === directoryModal) {
+        closeDirectory();
+    }
+
+});
+
+
+/* ESCAPE KEY */
+
 document.addEventListener("keydown", event => {
 
     if (event.key === "Escape") {
-
         closeModal();
-
+        closeDirectory();
     }
 
 });
@@ -591,20 +1012,20 @@ document.getElementById("languageBtn")
     currentLanguage =
         currentLanguage === "en" ? "mr" : "en";
 
-
     searchInput.placeholder =
         translations[currentLanguage].search;
-
 
     document.getElementById("languageBtn").textContent =
         currentLanguage === "en" ? "मराठी" : "English";
 
-
     document.getElementById("modalCloseBtn").textContent =
         translations[currentLanguage].close;
 
-
     displayJobs();
+
+    if (directoryModal.style.display === "flex") {
+        showDirectory(selectedDirectoryCategory);
+    }
 
 });
 
@@ -628,19 +1049,12 @@ onSnapshot(
             return {
 
                 id: document.id,
-
                 name: data.title || "",
-
                 category: data.category || "Other",
-
                 location: data.location || "",
-
                 applicationUrl: data.applicationUrl || "",
-
                 officialUrl: data.officialUrl || "",
-
                 notification: data.notification || "",
-
                 description: data.description || ""
 
             };
@@ -669,3 +1083,4 @@ onSnapshot(
 
 </body>
 </html>
+```
