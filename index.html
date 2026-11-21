@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SheCareer</title>
+<link rel="stylesheet" href="style.css">
+
+<style>
+.action-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 15px;
+}
+
+.action-buttons a,
+.action-buttons button {
+    display: inline-block;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    text-decoration: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.apply-btn {
+    background: #7028a0;
+    color: white;
+}
+
+.official-btn {
+    background: #f5d9f5;
+    color: #7028a0;
+}
+
+.disabled-btn {
+    background: #ddd !important;
+    color: #777 !important;
+    cursor: not-allowed !important;
+    pointer-events: none;
+}
+
+.modal-actions {
+    margin: 20px 0;
+}
+</style>
+</head>
+
+<body>
+
+<header class="header">
+    <div class="logo">She<span>Career</span></div>
+
+    <nav>
+        <a href="#home">Home</a>
+        <a href="#categories">Categories</a>
+        <a href="#jobs">Latest Jobs</a>
+        <a href="#about">About</a>
+        <a href="#contact">Contact</a>
+    </nav>
+
+    <button id="languageBtn" class="language-btn">मराठी</button>
+</header>
+
+<section id="home" class="hero">
+    <div class="hero-content">
+        <span class="tag">EMPOWERING WOMEN</span>
+        <h1>Your Dream Career Starts Here</h1>
+        <p>Discover the latest Government Job Opportunities for Women.</p>
+        <a href="#jobs" class="hero-btn">Explore Jobs →</a>
+    </div>
+</section>
+
+<section id="categories" class="section">
+    <div class="section-heading">
+        <span>EXPLORE OPPORTUNITIES</span>
+        <h2>Job Categories</h2>
+        <p>Choose your preferred career field.</p>
+    </div>
+
+    <div class="category-grid">
+        <button class="category-card" data-category="Banking"><span>🏦</span><h3>Banking</h3></button>
+        <button class="category-card" data-category="Police"><span>👮‍♀️</span><h3>Police</h3></button>
+        <button class="category-card" data-category="Railway"><span>🚆</span><h3>Railway</h3></button>
+        <button class="category-card" data-category="Teaching"><span>📚</span><h3>Teaching</h3></button>
+        <button class="category-card" data-category="Medical"><span>🏥</span><h3>Medical</h3></button>
+        <button class="category-card" data-category="UPSC"><span>🎓</span><h3>UPSC</h3></button>
+        <button class="category-card" data-category="MPSC"><span>📋</span><h3>MPSC</h3></button>
+        <button class="category-card" data-category="Defence"><span>🛡️</span><h3>Defence</h3></button>
+        <button class="category-card" data-category="SSC"><span>💼</span><h3>SSC</h3></button>
+        <button class="category-card" data-category="Other"><span>✨</span><h3>Other Jobs</h3></button>
+    </div>
+</section>
+
+<section id="jobs" class="section jobs-section">
+    <div class="section-heading">
+        <span>CAREER UPDATES</span>
+        <h2>Latest Government Jobs</h2>
+        <p>Explore job categories and opportunities.</p>
+    </div>
+
+    <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Search jobs...">
+        <button id="searchBtn">Search</button>
+    </div>
+
+    <div class="filters">
+        <select id="locationFilter">
+            <option value="">All Locations</option>
+            <option value="Maharashtra">Maharashtra</option>
+            <option value="Central">Central Government</option>
+        </select>
+        <button id="resetBtn">Reset Filters</button>
+    </div>
+
+    <p id="loadingMessage">Loading government jobs...</p>
+
+    <div id="jobContainer" class="job-grid"></div>
+    <p id="noResults" class="no-results" hidden>No jobs found.</p>
+</section>
+
+<section id="about" class="section about-section">
+    <div class="section-heading">
+        <span>WHO WE ARE</span>
+        <h2>About SheCareer</h2>
+    </div>
+    <p>SheCareer is a women-focused government job information platform. Our goal is to help women discover career opportunities, recruitment updates and useful information in one place.</p>
+</section>
+
+<section id="contact" class="section contact-section">
+    <div class="section-heading">
+        <span>GET IN TOUCH</span>
+        <h2>Contact Us</h2>
+    </div>
+    <p>Have questions or suggestions? We would love to hear from you.</p>
+    <p>Email: support@shecareer.example</p>
+</section>
+
+<footer>
+    <h2>She<span>Career</span></h2>
+    <p>Empowering Women Through Career Opportunities.</p>
+    <p>© 2026 SheCareer. All Rights Reserved.</p>
+</footer>
+
+<div id="jobModal" class="modal">
+    <div class="modal-content">
+
+        <button id="closeModal" class="close-btn">&times;</button>
+
+        <h2 id="modalTitle">Job Details</h2>
+
+        <div id="modalBody"></div>
+
+        <div id="modalActions" class="action-buttons modal-actions"></div>
+
+        <button id="modalCloseBtn" class="modal-close-btn">Close</button>
+
+    </div>
+</div>
+
+<script type="module">
+
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+    getFirestore,
+    collection,
+    onSnapshot
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+
+/* FIREBASE CONFIG */
+
+const firebaseConfig = {
+    apiKey: "AIzaSyCzHN6WtDWtvh0ZLMYnW6G6eATy0ib7NPFM",
+    authDomain: "shecareer-de56e.firebaseapp.com",
+    projectId: "shecareer-de56e",
+    storageBucket: "shecareer-de56e.firebasestorage.app",
+    messagingSenderId: "64077457973",
+    appId: "1:64077457973:web:f3de66e402bc7aef731f7c"
+};
+
+
+/* FIREBASE INITIALIZATION */
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const jobsCollection = collection(db, "jobs");
+
+
+/* VARIABLES */
+
+let jobs = [];
+let selectedCategory = "All";
+let currentLanguage = "en";
+
+const jobContainer = document.getElementById("jobContainer");
+const searchInput = document.getElementById("searchInput");
+const locationFilter = document.getElementById("locationFilter");
+const modal = document.getElementById("jobModal");
+
+
+/* TRANSLATIONS */
+
+const translations = {
+
+    en: {
+        search: "Search jobs...",
+        details: "View Details",
+        apply: "Apply Now",
+        official: "Visit Official Website",
+        notification: "Official Notification",
+        close: "Close",
+        noResults: "No jobs found.",
+        loading: "Loading government jobs...",
+        error: "Unable to load jobs. Please try again later.",
+        location: "Location",
+        category: "Category",
+        description: "Job Description",
+        unavailable: "Link Not Available",
+        notice: "Please verify eligibility, salary and application dates in the official notification."
+    },
+
+    mr: {
+        search: "नोकरी शोधा...",
+        details: "माहिती पहा",
+        apply: "अर्ज करा",
+        official: "अधिकृत वेबसाइट पहा",
+        notification: "अधिकृत जाहिरात",
+        close: "बंद करा",
+        noResults: "नोकरी सापडली नाही.",
+        loading: "सरकारी नोकऱ्या शोधत आहोत...",
+        error: "नोकऱ्या लोड झाल्या नाहीत. कृपया पुन्हा प्रयत्न करा.",
+        location: "ठिकाण",
+        category: "विभाग",
+        description: "नोकरीचे वर्णन",
+        unavailable: "लिंक उपलब्ध नाही",
+        notice: "पात्रता, पगार आणि अर्जाच्या तारखा अधिकृत जाहिरातीत तपासा."
+    }
+
+};
+
+
+/* URL VALIDATION */
+
+function isValidHttpUrl(value) {
+
+    try {
+
+        const url = new URL(value);
+
+        return url.protocol === "https:" ||
+               url.protocol === "http:";
+
+    } catch {
+
+        return false;
+
+    }
+
+}
+
+
+/* CREATE LINK BUTTON */
+
+function createLinkButton(text, url, className) {
+
+    const button = document.createElement("a");
+
+    button.textContent = text;
+    button.className = className;
+
+    if (url && isValidHttpUrl(url)) {
+
+        button.href = url;
+        button.target = "_blank";
+        button.rel = "noopener noreferrer";
+
+    } else {
+
+        button.href = "#";
+        button.classList.add("disabled-btn");
+
+        button.setAttribute("aria-disabled", "true");
+
+        button.title = translations[currentLanguage].unavailable;
+
+    }
+
+    return button;
+
+}
+
+
+/* LOCATION DISPLAY */
+
+function formatLocation(location) {
+
+    if (!location) return "Not specified";
+
+    if (location.toLowerCase().includes("central")) {
+        return currentLanguage === "en"
+            ? "Central Government"
+            : "केंद्र सरकार";
+    }
+
+    return location;
+
+}
+
+
+/* DISPLAY JOBS */
+
+function displayJobs() {
+
+    const search = searchInput.value.trim().toLowerCase();
+
+    const location = locationFilter.value;
+
+    jobContainer.innerHTML = "";
+
+    const filtered = jobs.filter(job => {
+
+        const jobName = (job.name || "").toLowerCase();
+
+        const categoryName = (job.category || "").toLowerCase();
+
+        const matchSearch =
+            jobName.includes(search) ||
+            categoryName.includes(search);
+
+        const matchCategory =
+            selectedCategory === "All" ||
+            job.category === selectedCategory;
+
+        const matchLocation =
+            location === "" ||
+            (location === "Central" &&
+             (job.location || "").toLowerCase().includes("central")) ||
+            (location === "Maharashtra" &&
+             (job.location || "").toLowerCase().includes("maharashtra"));
+
+        return matchSearch && matchCategory && matchLocation;
+
+    });
+
+
+    filtered.forEach(job => {
+
+        const card = document.createElement("div");
+
+        card.className = "job-card";
+
+
+        const title = document.createElement("h3");
+
+        title.textContent = job.name;
+
+
+        const category = document.createElement("p");
+
+        category.textContent =
+            translations[currentLanguage].category +
+            ": " + (job.category || "Other");
+
+
+        const place = document.createElement("p");
+
+        place.textContent =
+            translations[currentLanguage].location +
+            ": " + formatLocation(job.location);
+
+
+        const buttons = document.createElement("div");
+
+        buttons.className = "action-buttons";
+
+
+        const detailsButton = document.createElement("button");
+
+        detailsButton.type = "button";
+
+        detailsButton.textContent =
+            translations[currentLanguage].details;
+
+        detailsButton.addEventListener("click", () => showDetails(job));
+
+
+        const applyButton = createLinkButton(
+            translations[currentLanguage].apply,
+            job.applicationUrl,
+            "apply-btn"
+        );
+
+
+        buttons.append(detailsButton, applyButton);
+
+        card.append(title, category, place, buttons);
+
+        jobContainer.appendChild(card);
+
+    });
+
+
+    const noResults = document.getElementById("noResults");
+
+    noResults.hidden = filtered.length > 0;
+
+    noResults.textContent =
+        translations[currentLanguage].noResults;
+
+}
+
+
+/* JOB DETAILS POPUP */
+
+function showDetails(job) {
+
+    document.getElementById("modalTitle").textContent = job.name;
+
+    const body = document.getElementById("modalBody");
+
+    body.innerHTML = "";
+
+
+    const category = document.createElement("p");
+
+    category.textContent =
+        translations[currentLanguage].category +
+        ": " + (job.category || "Other");
+
+
+    const location = document.createElement("p");
+
+    location.textContent =
+        translations[currentLanguage].location +
+        ": " + formatLocation(job.location);
+
+
+    const description = document.createElement("p");
+
+    description.textContent =
+        translations[currentLanguage].description +
+        ": " + (job.description || "Please check the official notification.");
+
+
+    const notice = document.createElement("p");
+
+    notice.textContent =
+        translations[currentLanguage].notice;
+
+
+    body.append(category, location, description, notice);
+
+
+    const actions = document.getElementById("modalActions");
+
+    actions.innerHTML = "";
+
+
+    const applyButton = createLinkButton(
+        translations[currentLanguage].apply,
+        job.applicationUrl,
+        "apply-btn"
+    );
+
+
+    const officialButton = createLinkButton(
+        translations[currentLanguage].official,
+        job.officialUrl,
+        "official-btn"
+    );
+
+
+    const notificationButton = createLinkButton(
+        translations[currentLanguage].notification,
+        job.notification,
+        "official-btn"
+    );
+
+
+    actions.append(
+        applyButton,
+        officialButton,
+        notificationButton
+    );
+
+
+    modal.style.display = "flex";
+
+}
+
+
+/* CLOSE MODAL */
+
+function closeModal() {
+
+    modal.style.display = "none";
+
+}
+
+
+/* SEARCH */
+
+document.getElementById("searchBtn")
+.addEventListener("click", displayJobs);
+
+searchInput.addEventListener("input", displayJobs);
+
+
+/* LOCATION FILTER */
+
+locationFilter.addEventListener("change", displayJobs);
+
+
+/* RESET FILTERS */
+
+document.getElementById("resetBtn")
+.addEventListener("click", () => {
+
+    selectedCategory = "All";
+
+    searchInput.value = "";
+
+    locationFilter.value = "";
+
+    displayJobs();
+
+});
+
+
+/* CATEGORY FILTER */
+
+document.querySelectorAll(".category-card")
+.forEach(button => {
+
+    button.addEventListener("click", () => {
+
+        selectedCategory = button.dataset.category;
+
+        displayJobs();
+
+        document.getElementById("jobs")
+        .scrollIntoView({ behavior: "smooth" });
+
+    });
+
+});
+
+
+/* MODAL EVENTS */
+
+document.getElementById("closeModal")
+.addEventListener("click", closeModal);
+
+document.getElementById("modalCloseBtn")
+.addEventListener("click", closeModal);
+
+modal.addEventListener("click", event => {
+
+    if (event.target === modal) {
+
+        closeModal();
+
+    }
+
+});
+
+document.addEventListener("keydown", event => {
+
+    if (event.key === "Escape") {
+
+        closeModal();
+
+    }
+
+});
+
+
+/* LANGUAGE SWITCH */
+
+document.getElementById("languageBtn")
+.addEventListener("click", () => {
+
+    currentLanguage =
+        currentLanguage === "en" ? "mr" : "en";
+
+
+    searchInput.placeholder =
+        translations[currentLanguage].search;
+
+
+    document.getElementById("languageBtn").textContent =
+        currentLanguage === "en" ? "मराठी" : "English";
+
+
+    document.getElementById("modalCloseBtn").textContent =
+        translations[currentLanguage].close;
+
+
+    displayJobs();
+
+});
+
+
+/* FIRESTORE REAL-TIME JOB LOADING */
+
+document.getElementById("loadingMessage").textContent =
+    translations[currentLanguage].loading;
+
+
+onSnapshot(
+
+    jobsCollection,
+
+    snapshot => {
+
+        jobs = snapshot.docs.map(document => {
+
+            const data = document.data();
+
+            return {
+
+                id: document.id,
+
+                name: data.title || "",
+
+                category: data.category || "Other",
+
+                location: data.location || "",
+
+                applicationUrl: data.applicationUrl || "",
+
+                officialUrl: data.officialUrl || "",
+
+                notification: data.notification || "",
+
+                description: data.description || ""
+
+            };
+
+        });
+
+
+        document.getElementById("loadingMessage").style.display = "none";
+
+        displayJobs();
+
+    },
+
+    error => {
+
+        console.error("Firebase Error:", error);
+
+        document.getElementById("loadingMessage").textContent =
+            translations[currentLanguage].error;
+
+    }
+
+);
+
+</script>
+
+</body>
+</html>

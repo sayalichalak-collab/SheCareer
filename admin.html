@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SheCareer | Admin Panel</title>
+<link rel="stylesheet" href="style.css">
+
+<style>
+body {
+    background: #f8f3fc;
+    font-family: Arial, sans-serif;
+}
+
+.admin-container {
+    max-width: 1000px;
+    margin: 40px auto;
+    padding: 20px;
+}
+
+.admin-heading {
+    color: #7028a0;
+}
+
+.admin-form, .login-box {
+    background: white;
+    padding: 25px;
+    border-radius: 14px;
+    box-shadow: 0 4px 18px #00000012;
+    margin-bottom: 30px;
+}
+
+input, select, textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px;
+    margin: 8px 0 16px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 15px;
+}
+
+button {
+    background: #7028a0;
+    color: white;
+    padding: 12px 22px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    margin: 5px;
+}
+
+.admin-job {
+    background: white;
+    padding: 18px;
+    margin: 12px 0;
+    border-radius: 10px;
+    box-shadow: 0 3px 12px #00000010;
+}
+
+.edit-btn {
+    background: #f3d5ff;
+    color: #7028a0;
+}
+
+.delete-btn {
+    background: #e53935;
+}
+
+#logoutBtn {
+    background: #e53935;
+}
+
+#adminSection {
+    display: none;
+}
+
+#message {
+    color: #7028a0;
+    font-weight: bold;
+    margin: 15px 0;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="admin-container">
+
+<h1 class="admin-heading">SheCareer Admin Panel</h1>
+
+<!-- ADMIN LOGIN -->
+
+<div id="loginSection" class="login-box">
+
+<h2>Admin Login</h2>
+
+<label>Email Address</label>
+<input type="email" id="adminEmail" placeholder="Enter admin email" required>
+
+<label>Password</label>
+<input type="password" id="adminPassword" placeholder="Enter password" required>
+
+<button id="loginBtn">Login</button>
+
+<p id="loginMessage"></p>
+
+</div>
+
+<!-- ADMIN DASHBOARD -->
+
+<div id="adminSection">
+
+<button id="logoutBtn">Logout</button>
+
+<h2>Add New Government Job</h2>
+
+<form class="admin-form" id="jobForm">
+
+<label>Job Title</label>
+<input type="text" id="jobTitle" placeholder="Enter job title" required>
+
+<label>Department</label>
+<input type="text" id="department" placeholder="Enter department" required>
+
+<label>Location</label>
+<input type="text" id="location" placeholder="Maharashtra or Central" required>
+
+<label>Category</label>
+<select id="category" required>
+<option value="">Select Category</option>
+<option>Banking</option>
+<option>Railway</option>
+<option>Police</option>
+<option>Teaching</option>
+<option>Medical</option>
+<option>UPSC</option>
+<option>MPSC</option>
+<option>SSC</option>
+<option>Defence</option>
+<option>Other</option>
+</select>
+
+<label>Official Notification Link</label>
+<input type="url" id="notification" placeholder="https://..." required>
+
+<label>Application Link</label>
+<input type="url" id="applicationUrl" placeholder="https://...">
+
+<label>Official Website Link</label>
+<input type="url" id="officialUrl" placeholder="https://...">
+
+<label>Job Description</label>
+<textarea id="description" rows="4" placeholder="Enter job details"></textarea>
+
+<button type="submit" id="submitBtn">Add Job</button>
+
+<button type="button" id="cancelBtn" style="display:none;">
+Cancel Edit
+</button>
+
+</form>
+
+<h2>Manage Jobs</h2>
+
+<div id="message"></div>
+<div id="jobList"></div>
+
+</div>
+
+</div>
+
+<script type="module">
+
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+    getAuth,
+    signInWithEmailAndPassword,
+    onAuthStateChanged,
+    signOut
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+import {
+    getFirestore,
+    collection,
+    addDoc,
+    getDocs,
+    updateDoc,
+    deleteDoc,
+    doc,
+    serverTimestamp
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCzHN6WtDWtvh0ZLMYnwG6eATy0ib7NPFM",
+  authDomain: "shecareer-de56e.firebaseapp.com",
+  projectId: "shecareer-de56e",
+  storageBucket: "shecareer-de56e.firebasestorage.app",
+  messagingSenderId: "64077457973",
+  appId: "1:64077457973:web:f3de66e402bc7aef731f7c"
+
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const ADMIN_UID = "VVsRhrTSaVama0n71WmgpfMuYwe2";
+
+const jobsCollection = collection(db, "jobs");
+
+const loginSection = document.getElementById("loginSection");
+const adminSection = document.getElementById("adminSection");
+const jobForm = document.getElementById("jobForm");
+const jobList = document.getElementById("jobList");
+const message = document.getElementById("message");
+
+let jobs = [];
+let editId = null;
+
+function showMessage(text) {
+    message.textContent = text;
+}
+
+// LOGIN
+
+document.getElementById("loginBtn").addEventListener("click", async () => {
+
+    const email = document.getElementById("adminEmail").value.trim();
+    const password = document.getElementById("adminPassword").value;
+
+    if (!email || !password) {
+        document.getElementById("loginMessage").textContent =
+            "Enter email and password.";
+        return;
+    }
+
+    try {
+        document.getElementById("loginMessage").textContent = "Logging in...";
+
+        const result = await signInWithEmailAndPassword(
+            auth,
+            email,
+            password
+        );
+
+        if (result.user.uid !== ADMIN_UID) {
+            await signOut(auth);
+            document.getElementById("loginMessage").textContent =
+                "Access denied. Admin account only.";
+        }
+
+    } catch (error) {
+        document.getElementById("loginMessage").textContent =
+            error.message;
+    }
+});
+
+// AUTH CHECK
+
+onAuthStateChanged(auth, async (user) => {
+
+    if (user && user.uid === ADMIN_UID) {
+
+        loginSection.style.display = "none";
+        adminSection.style.display = "block";
+
+        await loadJobs();
+
+    } else {
+
+        loginSection.style.display = "block";
+        adminSection.style.display = "none";
+    }
+
+});
+
+// LOGOUT
+
+document.getElementById("logoutBtn").addEventListener("click", async () => {
+    await signOut(auth);
+});
+
+// LOAD JOBS
+
+async function loadJobs() {
+
+    jobList.textContent = "Loading jobs...";
+
+    try {
+
+        const snapshot = await getDocs(jobsCollection);
+
+        jobs = snapshot.docs.map(item => ({
+            id: item.id,
+            ...item.data()
+        }));
+
+        showJobs();
+
+    } catch (error) {
+
+        jobList.textContent = "Error loading jobs: " + error.message;
+
+    }
+}
+
+// DISPLAY JOBS
+
+function showJobs() {
+
+    jobList.innerHTML = "";
+
+    if (jobs.length === 0) {
+        jobList.textContent = "No jobs added yet.";
+        return;
+    }
+
+    jobs.forEach(job => {
+
+        const card = document.createElement("div");
+        card.className = "admin-job";
+
+        const title = document.createElement("h3");
+        title.textContent = job.title || "";
+
+        const details = document.createElement("p");
+        details.textContent =
+            (job.department || "") + " | " +
+            (job.location || "") + " | " +
+            (job.category || "");
+
+        const editButton = document.createElement("button");
+        editButton.className = "edit-btn";
+        editButton.textContent = "Edit";
+
+        editButton.onclick = () => editJob(job.id);
+
+        const deleteButton = document.createElement("button");
+        deleteButton.className = "delete-btn";
+        deleteButton.textContent = "Delete";
+
+        deleteButton.onclick = () => deleteJob(job.id);
+
+        card.append(title, details, editButton, deleteButton);
+
+        jobList.appendChild(card);
+
+    });
+
+}
+
+// ADD / UPDATE JOB
+
+jobForm.addEventListener("submit", async (event) => {
+
+    event.preventDefault();
+
+    if (!auth.currentUser || auth.currentUser.uid !== ADMIN_UID) {
+        alert("Admin login required.");
+        return;
+    }
+
+    const job = {
+
+        title: document.getElementById("jobTitle").value.trim(),
+
+        department: document.getElementById("department").value.trim(),
+
+        location: document.getElementById("location").value.trim(),
+
+        category: document.getElementById("category").value,
+
+        notification: document.getElementById("notification").value.trim(),
+
+        applicationUrl: document.getElementById("applicationUrl").value.trim(),
+
+        officialUrl: document.getElementById("officialUrl").value.trim(),
+
+        description: document.getElementById("description").value.trim(),
+
+        updatedAt: serverTimestamp()
+
+    };
+
+    try {
+
+        document.getElementById("submitBtn").disabled = true;
+
+        if (editId) {
+
+            await updateDoc(doc(db, "jobs", editId), job);
+
+            showMessage("Job updated successfully!");
+
+        } else {
+
+            job.createdAt = serverTimestamp();
+
+            await addDoc(jobsCollection, job);
+
+            showMessage("Job added successfully!");
+
+        }
+
+        jobForm.reset();
+
+        editId = null;
+
+        document.getElementById("submitBtn").textContent = "Add Job";
+
+        document.getElementById("cancelBtn").style.display = "none";
+
+        await loadJobs();
+
+    } catch (error) {
+
+        showMessage("Error: " + error.message);
+
+    } finally {
+
+        document.getElementById("submitBtn").disabled = false;
+
+    }
+
+});
+
+// EDIT JOB
+
+function editJob(id) {
+
+    const job = jobs.find(item => item.id === id);
+
+    if (!job) return;
+
+    document.getElementById("jobTitle").value = job.title || "";
+
+    document.getElementById("department").value = job.department || "";
+
+    document.getElementById("location").value = job.location || "";
+
+    document.getElementById("category").value = job.category || "";
+
+    document.getElementById("notification").value = job.notification || "";
+
+    document.getElementById("applicationUrl").value = job.applicationUrl || "";
+
+    document.getElementById("officialUrl").value = job.officialUrl || "";
+
+    document.getElementById("description").value = job.description || "";
+
+    editId = id;
+
+    document.getElementById("submitBtn").textContent = "Update Job";
+
+    document.getElementById("cancelBtn").style.display = "inline-block";
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+
+}
+
+// CANCEL EDIT
+
+document.getElementById("cancelBtn").addEventListener("click", () => {
+
+    jobForm.reset();
+
+    editId = null;
+
+    document.getElementById("submitBtn").textContent = "Add Job";
+
+    document.getElementById("cancelBtn").style.display = "none";
+
+});
+
+// DELETE JOB
+
+async function deleteJob(id) {
+
+    if (!confirm("Are you sure you want to delete this job?")) {
+        return;
+    }
+
+    try {
+
+        await deleteDoc(doc(db, "jobs", id));
+
+        showMessage("Job deleted successfully!");
+
+        await loadJobs();
+
+    } catch (error) {
+
+        showMessage("Error deleting job: " + error.message);
+
+    }
+
+}
+
+</script>
+
+</body>
+</html>
